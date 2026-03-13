@@ -359,14 +359,149 @@ class WindowManager
     }
 }
 
+// ─── Remaster Manager ───────────────────────────────────────────────────────
+
+static class RemasterManager
+{
+    // LEGO.JAM lives next to the game EXE. Swap between original and remastered.
+    public static string GameDir => AppContext.BaseDirectory;
+    public static string OriginalJam    => System.IO.Path.Combine(GameDir, "LEGO.JAM");
+    public static string RemasteredJam  => System.IO.Path.Combine(GameDir, "LEGO_REMASTERED.JAM");
+    public static string BackupJam      => System.IO.Path.Combine(GameDir, "LEGO_ORIGINAL.JAM");
+    public static string StatePath      => System.IO.Path.Combine(GameDir, ".remaster_state");
+
+    public static bool IsRemasteredAvailable()
+        => System.IO.File.Exists(RemasteredJam);
+
+    public static bool IsRemasteredActive()
+    {
+        if (!System.IO.File.Exists(StatePath)) return false;
+        return System.IO.File.ReadAllText(StatePath).Trim() == "remastered";
+    }
+
+    public static bool ActivateRemastered()
+    {
+        try
+        {
+            if (!IsRemasteredAvailable())
+            {
+                Console.WriteLine("[Remaster] LEGO_REMASTERED.JAM not found. Run the remaster pipeline first.");
+                return false;
+            }
+            if (!System.IO.File.Exists(BackupJam) && System.IO.File.Exists(OriginalJam))
+                System.IO.File.Copy(OriginalJam, BackupJam);
+            System.IO.File.Copy(RemasteredJam, OriginalJam, overwrite: true);
+            System.IO.File.WriteAllText(StatePath, "remastered");
+            Console.WriteLine("[Remaster] Remastered textures ACTIVE.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Remaster] Failed to activate: {ex.Message}");
+            return false;
+        }
+    }
+
+    public static void RestoreOriginal()
+    {
+        try
+        {
+            if (System.IO.File.Exists(BackupJam))
+            {
+                System.IO.File.Copy(BackupJam, OriginalJam, overwrite: true);
+                Console.WriteLine("[Remaster] Original textures restored.");
+            }
+            System.IO.File.WriteAllText(StatePath, "original");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Remaster] Failed to restore: {ex.Message}");
+        }
+    }
+
+    public static void ShowMenu()
+    {
+        Console.WriteLine();
+        Console.WriteLine("╔══════════════════════════════════════╗");
+        Console.WriteLine("║        LEGO Racers Launcher          ║");
+        Console.WriteLine("╠══════════════════════════════════════╣");
+
+        bool remasterAvail  = IsRemasteredAvailable();
+        bool remasterActive = IsRemasteredActive();
+
+        if (!remasterAvail)
+        {
+            Console.WriteLine("║  Textures: Original                  ║");
+            Console.WriteLine("║  (Remastered pack not installed)     ║");
+        }
+        else if (remasterActive)
+        {
+            Console.WriteLine("║  Textures: ★ REMASTERED ★            ║");
+        }
+        else
+        {
+            Console.WriteLine("║  Textures: Original                  ║");
+        }
+
+        Console.WriteLine("╠══════════════════════════════════════╣");
+        Console.WriteLine("║  [Enter]  Launch game                ║");
+
+        if (remasterAvail)
+        {
+            if (remasterActive)
+                Console.WriteLine("║  [O]      Switch to Original         ║");
+            else
+                Console.WriteLine("║  [R]      Switch to Remastered       ║");
+        }
+
+        Console.WriteLine("║  [Esc]    Exit                       ║");
+        Console.WriteLine("╚══════════════════════════════════════╝");
+        Console.Write("> ");
+
+        while (true)
+        {
+            var key = Console.ReadKey(intercept: true);
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                return;  // proceed to launch
+            }
+            if (key.Key == ConsoleKey.Escape)
+            {
+                Console.WriteLine("\nExiting.");
+                System.Environment.Exit(0);
+            }
+            if (remasterAvail && (key.KeyChar == 'r' || key.KeyChar == 'R') && !remasterActive)
+            {
+                Console.WriteLine();
+                ActivateRemastered();
+                ShowMenu();
+                return;
+            }
+            if (remasterAvail && (key.KeyChar == 'o' || key.KeyChar == 'O') && remasterActive)
+            {
+                Console.WriteLine();
+                RestoreOriginal();
+                ShowMenu();
+                return;
+            }
+        }
+    }
+}
+
 class Program
 {
     static void Main()
     {
-        Console.Title = "LEGO Racers Controller Bridge";
-        Console.WriteLine("LEGO Racers Xbox Controller Bridge");
-        Console.WriteLine("Waiting for LEGO Racers and Xbox controller...");
-        Console.WriteLine("Close this window to exit.\n");
+        Console.Title = "LEGO Racers Launcher";
+        Console.WriteLine("LEGO Racers Win11 Compatibility Layer");
+
+        // Show launcher menu (texture toggle + launch)
+        RemasterManager.ShowMenu();
+
+        Console.WriteLine("\nLaunching LEGO Racers...");
+        Console.WriteLine("Xbox controller and multiplayer mod active.");
+        Console.WriteLine("Press F10 in-game for online multiplayer lobby.\n");
 
         // Start window manager in background
         // Window manager disabled - game runs fullscreen, dgVoodoo handles presentation
