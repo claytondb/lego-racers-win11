@@ -499,9 +499,27 @@ class Program
         // Show launcher menu (texture toggle + launch)
         RemasterManager.ShowMenu();
 
+        // Launch the game executable from the same folder as this launcher
+        string gameDir = AppContext.BaseDirectory;
+        string gameExe = System.IO.Path.Combine(gameDir, "LEGORacers.exe");
+
+        if (!System.IO.File.Exists(gameExe))
+        {
+            Console.WriteLine($"\nERROR: Could not find LEGORacers.exe at:\n  {gameExe}");
+            Console.WriteLine("Make sure LegoController.exe is in the same folder as LEGORacers.exe.");
+            Console.WriteLine("\nPress any key to exit.");
+            Console.ReadKey(true);
+            return;
+        }
+
         Console.WriteLine("\nLaunching LEGO Racers...");
-        Console.WriteLine("Xbox controller and multiplayer mod active.");
-        Console.WriteLine("Press F10 in-game for online multiplayer lobby.\n");
+        Console.WriteLine("Xbox controller active. Press F10 in-game for online multiplayer.\n");
+
+        var gameProc = new Process();
+        gameProc.StartInfo.FileName         = gameExe;
+        gameProc.StartInfo.WorkingDirectory = gameDir;
+        gameProc.StartInfo.UseShellExecute  = true;
+        gameProc.Start();
 
         // Start window manager in background
         // Window manager disabled - game runs fullscreen, dgVoodoo handles presentation
@@ -509,7 +527,7 @@ class Program
         bool wasConnected   = false;
         bool wasGameActive  = false;
 
-        while (true)
+        while (!gameProc.HasExited)
         {
             Thread.Sleep(8); // ~120Hz polling
 
