@@ -1,0 +1,47 @@
+# Game files (copyrighted — not for redistribution)
+*.exe
+*.icd
+*.tun
+*.jam
+*.JAM
+LEGO.JAM
+GolDP.dll
+DDraw.dll
+D3DImm.dll
+dsound.dll
+dxwrapper.dll
+*.avi
+Manual.pdf
+Readme.txt
+Save/
+
+# dgVoodoo / dxwrapper binaries (use originals from their respective projects)
+dgVoodoo.dll
+dgVoodooCpl.exe
+
+# Compiled outputs
+NetMod/*.obj
+NetMod/*.lib
+NetMod/*.exp
+NetMod/DINPUT.DLL
+LegoController/bin/
+LegoController/obj/
+LegoController/publish/
+*.pdb
+
+# Installer output
+installer/Output/
+LEGORacers_Win11_Setup.exe
+
+# Python
+__pycache__/
+*.pyc
+Server/*.log
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
